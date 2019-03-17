@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.family.springboot.system.dao.UserDao">
+
+    <select id="findUser" parameterType="String" resultMap="userDtoMap">
+        <include refid="com.family.common.dao.Base.pagePerfix"></include>
+        SELECT u.userId,u.userName,u.password,u.sex,u.brithday,c.name ,r.roleId,r.roleName FROM p_user u,b_count
+        c,p_role
+        r,m_user_role ur where 1=1
+        AND c.type='SEX'
+        AND U.SEX=C.ID
+        AND u.userId=ur.userId
+        AND ur.roleId=r.roleId
+        AND u.state=1
+
+        <if test="userName!=null and userName !='' ">
+            AND username like '%${userName}%'
+        </if>
+        <if test="roleId!=null and roleId !='' ">
+            AND r.roleId = #{roleId}
+        </if>
+        <if test="sex!=null and sex !='' ">
+            AND sex =#{sex}
+        </if>
+        <if test="createTimeStart!=null and createTimeStart !='' ">
+            AND u.createTime &gt;= TO_DATE( #{createTimeStart},'yyyy-mm-dd')
+        </if>
+        <if test="createTimeEnd!=null and createTimeEnd !='' ">
+            AND u.createTime &lt;= TO_DATE(' ${createTimeEnd} 23:59:59','yyyy-mm-dd hh24:mi:ss')
+        </if>
+
+        <include refid="com.family.common.dao.Base.pageSuffix"></include>
+    </select>
+
+    <resultMap id="userDtoMap" type="com.family.springboot.system.dto.UserDto">
+        <id property="userId" column="userId"></id>
+        <result property="userName" column="userName"></result>
+        <result property="passWord" column="passWord"></result>
+        <result property="state" column="state"></result>
+        <result property="brithday" column="brithday"></result>
+        <result property="createTime" column="createTime"></result>
+        <result property="deleteTime" column="deleteTime"></result>
+        <result property="sexName" column="name"></result>
+        <result property="sex" column="sex"></result>
+        <result property="roleId" column="roleId"></result>
+        <result property="roleName" column="roleName"></result>
+        <!--<id property="userId" column="userId"></id>-->
+        <!--<result property="userName" column="userName"></result>-->
+        <!--<result property="passWord" column="passWord"></result>-->
+        <!--<result property="state" column="state"></result>-->
+        <!--<result property="brithday" column="brithday"></result>-->
+        <!--<result property="createTime" column="createTime"></result>-->
+        <!--<result property="deleteTime" column="deleteTime"></result>-->
+        <!--<result property="sexName" column="name"></result>-->
+        <!--<association property="sex" javaType="Count" >-->
+        <!--<id property="id" column="id"></id>-->
+        <!--<result property="name" column="name"></result>-->
+        <!--<result property="type" column="type"></result>-->
+        <!--</association>-->
+        <!--<association property="role" javaType="Role">-->
+        <!--<id property="roleId" column="roleId"></id>-->
+        <!--<result property="roleName" column="roleName"></result>-->
+        <!--<result property="state" column="state"></result>-->
+        <!--<result property="desc" column="desc"></result>-->
+        <!--<result property="createTime" column="createTime"></result>-->
+        <!--<result property="deleteTime" column="deleteTime"></result>-->
+        <!--&lt;!&ndash;<collection property="list" column="list"  ofType="Permission"></collection>&ndash;&gt;-->
+        <!--</association>-->
+
+
+    </resultMap>
+
+    <select id="findUser2" parameterType="String" resultMap="userDtoMap2">
+        <include refid="com.family.common.dao.Base.pagePerfix"></include>
+        SELECT u.userId,u.userName,u.password,u.sex,u.brithday,c.name ,r.roleId,r.roleName FROM p_user u,b_count
+        c,p_role
+        r,m_user_role ur where 1=1
+        AND c.type='SEX'
+        AND U.SEX=C.ID
+        AND u.userId=ur.userId
+        AND ur.roleId=r.roleId
+        AND u.state=1
+
+        <if test="userName!=null and userName !='' ">
+            AND username like '%${userName}%'
+        </if>
+        <if test="roleId!=null and roleId !='' ">
+            AND r.roleId = #{roleId}
+        </if>
+        <if test="sex!=null and sex !='' ">
+            AND sex =#{sex}
+        </if>
+        <if test="createTimeStart!=null and createTimeStart !='' ">
+            AND u.createTime &gt;= TO_DATE( #{createTimeStart},'yyyy-mm-dd')
+        </if>
+        <if test="createTimeEnd!=null and createTimeEnd !='' ">
+            AND u.createTime &lt;= TO_DATE(' ${createTimeEnd} 23:59:59','yyyy-mm-dd hh24:mi:ss')
+        </if>
+
+        <include refid="com.family.common.dao.Base.pageSuffix"></include>
+    </select>
+
+    <resultMap id="userDtoMap2" type="HashMap">
+        <id property="userId" column="userId"></id>
+        <result property="userName" column="userName"></result>
+        <result property="passWord" column="passWord"></result>
+        <result property="state" column="state"></result>
+        <result property="brithday" column="brithday"></result>
+        <result property="createTime" column="createTime"></result>
+        <result property="deleteTime" column="deleteTime"></result>
+        <result property="sexName" column="name"></result>
+        <result property="sex" column="sex"></result>
+        <result property="roleId" column="roleId"></result>
+        <result property="roleName" column="roleName"></result>
+    </resultMap>
+
+    <select id="getCount" resultType="Count">
+        SELECT name from b_count where type='SEX'
+    </select>
+
+    <select id="getTotal" resultType="Integer">
+        SELECT count(*) from p_user where state=1
+    </select>
+
+    <update id="deleteUser" parameterType="String">
+        update p_user set state =0,deleteTime=SYSDATE
+        WHERE userId in(${userIdArr})
+    </update>
+
+    <select id="getSex" resultMap="sexMap">
+        SELECT ID,NAME FROM B_COUNT WHERE TYPE='SEX'
+    </select>
+    <resultMap id="sexMap" type="HashMap">
+        <id property="id" column="id"></id>
+        <result property="name" column="name"></result>
+    </resultMap>
+
+    <select id="getRole" resultMap="roleMap">
+        SELECT ROLEID,ROLENAME FROM P_ROLE WHERE STATE='1'
+    </select>
+
+    <resultMap id="roleMap" type="HashMap">
+        <id property="id" column="roleId"></id>
+        <result property="name" column="roleName"></result>
+    </resultMap>
+
+    <select id="verifyUser" resultType="Integer">
+        select count(*) from p_user where state='1' and username=#{userName}
+        <if test="userId !=null and userId !=''">
+            and userId &lt;&gt; #{userId}
+        </if>
+    </select>
+
+    <insert id="insertUser">
+        insert into p_user (userId,userName,password,state,sex,brithday,createTime)values(
+        #{userId},#{userName},#{password},'1',#{sex},to_date(#{brithday},'yyyy-mm-dd'),sysdate)
+    </insert>
+    <insert id="insertUserRole">
+        insert into m_user_role (userId,roleId) values(
+        #{userId},#{roleId})
+    </insert>
+    <update id="updateUser">
+        update p_user set userName=#{userName},sex=#{sex},
+        <if test="pwd!=''">
+            password=#{pwd},
+        </if>
+        brithday=to_date(#{brithday},'yyyy-mm-dd')
+        WHERE userId=#{userId}
+    </update>
+
+    <update id="updateUserRole">
+        update m_user_role set roleId=#{roleId}
+        where userId=#{userId}
+    </update>
+</mapper>

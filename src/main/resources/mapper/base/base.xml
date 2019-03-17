@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.family.common.dao.Base">
+    <!--oracle分页-->
+    <sql id="pagePerfix">
+      SELECT * FROM (SELECT T .*, ROWNUM AS rn FROM (
+    </sql>
+
+    <sql id="pageSuffix">
+		) T WHERE ROWNUM &lt;= ${page}*${rows} ) WHERE rn &gt;=((${page}-1) * ${rows}) +1
+    </sql>
+
+</mapper>

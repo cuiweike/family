@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.family.springboot.system.dao.UserRoleDao">
+
+    <select id="findUserRole" resultMap="userRoleMap">
+        select u.*,r.*,c.* from p_user u,p_role r,m_user_role ur,b_count c
+        WHERE u.userId=ur.userId
+        AND  ur.roleId=r.roleId
+        AND  c.id=u.sex
+        AND c.type='SEX'
+    </select>
+
+    <resultMap id="userRoleMap" type="com.family.springboot.system.entity.UserRole">
+        <association property="user" javaType="User">
+            <id property="userId" column="userId"></id>
+            <result property="userName" column="userName"></result>
+            <result property="passWord" column="passWord"></result>
+            <result property="state" column="state"></result>
+            <result property="brithday" column="brithday"></result>
+            <result property="createTime" column="createTime"></result>
+            <result property="deleteTime" column="deleteTime"></result>
+            <result property="sexName" column="name"></result>
+            <association property="sex" javaType="Count" >
+                <id property="id" column="id"></id>
+                <result property="name" column="name"></result>
+                <result property="type" column="type"></result>
+            </association>
+        </association>
+        <association property="role" javaType="Role">
+            <id property="roleId" column="roleId"></id>
+            <result property="roleName" column="roleName"></result>
+            <result property="state" column="state"></result>
+            <result property="desc" column="desc"></result>
+            <result property="createTime" column="createTime"></result>
+            <result property="deleteTime" column="deleteTime"></result>
+        </association>
+    </resultMap>
+
+
+</mapper>

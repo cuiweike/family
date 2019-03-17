@@ -1,0 +1,37 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+spring:
+  datasource:
+    driver-class-name: oracle.jdbc.driver.OracleDriver
+    url: jdbc:oracle:thin:@localhost:1521/ORCL
+    username: root
+    password: root
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  thymeleaf:
+      prefix: classpath:/templates/
+      suffix: .html
+      cache: false
+      encoding: UTF-8
+  http:
+    encoding:
+      charset: UTF-8
+  mvc:
+    view:
+      prefix:
+      suffix:
+  resources:
+    static-locations: classpath:/static/, classpath:/templates/
+mybatis:
+  type-aliases-package: com.family.springboot.**.entity ,com.family.springboot.**.dto , com.family.common.pojo
+  mapper-locations: classpath:mapper/**/*.xml
+  configLocation : classpath:mybatis-config.xml
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
+#logging:
+#  level:  com.family.springboot.**.dao : DEBUG

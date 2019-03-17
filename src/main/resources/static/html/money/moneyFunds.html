@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>记账本</title>
+    <!--css引入-->
+    <link href="/plugins/jquery-easyui-1.4.5/themes/default/easyui.css" rel="stylesheet" type="text/css">
+    <link href="/plugins/jquery-easyui-1.4.5/themes/icon.css" rel="stylesheet" type="text/css">
+    <!--js引入 -->
+    <script src="/plugins/jquery-easyui-1.4.5/jquery-1.8.3.min.js"></script>
+    <script src="/plugins/jquery-easyui-1.4.5/jquery.easyui.min.js"></script>
+    <script src="/plugins/jquery-easyui-1.4.5/easyui-lang-zh_CN.js"></script>
+    <script src="/plugins/jquery-easyui-1.4.5/jquery.json-2.4.min.js"></script>
+    <script src="/plugins/easyUICommon.js"></script>
+    <script type="text/javascript">
+        var columns = [[{
+            field: 'id',
+            checkbox: true
+        }, {
+            field: 'typeOneParentName',
+            title: '资金类型',
+            width: 80,
+            align: 'center'
+        }, {
+            field: 'typeTwoParentName',
+            title: '二级分类',
+            width: 80,
+            align: 'center'
+        }, {
+            field: 'typeName',
+            title: '具体分类',
+            width: 80,
+            align: 'center'
+        }, {
+            field: 'moneyText',
+            title: '金额',
+            width: 80,
+            align: 'center'
+        }, {
+            field: 'content',
+            title: '详细内容',
+            width: 150,
+            align: 'center'
+        }, {
+            field: 'transactionTime',
+            title: '交易时间',
+            width: 80,
+            align: 'center'
+        }, {
+            field: 'stateName',
+            title: '状态',
+            width: 80,
+            align: 'center'
+        }, {
+            field: 'reason',
+            title: '作废原因',
+            width: 150,
+            align: 'center'
+        }]];
+
+        var toolbar = [
+            {
+                id: 'add',
+                text: '新增',
+                iconCls: 'icon-add',
+                handler: function () {
+                    initDialog(null);
+                }
+            }, {
+                id: 'update',
+                text: '修改',
+                iconCls: 'icon-edit',
+                handler: function () {
+                    var datas = $("#grid").datagrid('getSelections');
+                    if (datas.length != 1) {
+                        $.messager.alert('提示信息', '请选择一条数据', 'warning');
+                        return;
+                    }
+                    initDialog(datas[0]);
+                }
+            }]
+
+        $(function () {
+            $('#grid').datagrid({
+                iconCls: 'icon-forward',
+                fit: true,
+                fitColumns: true,
+                nowrap: true,
+                border: false,
+                method: 'POST',
+                striped: true,
+                pageList: [20, 40, 60],
+                pagination: true,
+                idField: 'id',
+                toolbar: toolbar,
+                columns: columns,
+                onLoadSuccess: function () {
+                    //getPermission();
+                }
+            });
+
+            getTypeTree("FrmTypeTree");
+            getState("FrmStateId");
+
+            query();
+        });
+
+
+        function query() {
+            $('#grid').datagrid({
+                url: "/moneyFundsController/getData",
+                queryParams: {
+                    type: $("#FrmTypeTree").combotree('getValue'),
+                    stateId: $("#FrmStateId").combobox('getValue'),
+                    transactionTimeStart: $("#FrmTransactionTimeStart").datebox('getValue'),
+                    transactionTimeEnd: $("#FrmTransactionTimeEnd").datebox('getValue')
+                }
+            });
+        }
+
+        /**
+         * 下拉框
+         */
+
+        //类型结构
+        function getTypeTree(id, v) {
+            if (v == undefined || v == null) {
+                v = '';
+            }
+            $("#" + id).combotree({
+                url: "/moneyFundsController/getTypeTree",
+                valueField: 'id',
+                textField: 'name',
+                onLoadSuccess: function (r) {
+                    $("#" + id).combotree('setValue', v);
+                }
+            });
+        }
+        //类型结构
+        function getTypeTree2(id, v) {
+            if (v == undefined || v == null) {
+                v = '';
+            }
+            $("#" + id).combotree({
+                url: "/moneyFundsController/getTypeTree",
+                valueField: 'id',
+                textField: 'name',
+                onLoadSuccess: function (r) {
+                    $("#" + id).combotree('setValue', v);
+                    var o=$("#" + id).combotree('tree').tree('getSelected').pid;
+                    console.log(o);
+                    if(o!="5"&&o!="8"){
+                        $("#rate").numberbox({disabled:true});
+                        $("#rate").numberbox('setValue','');
+                        $("#otherType").combobox({disabled:true});
+                        $("#finanial").combobox({disabled:true})
+                    }else {
+                        $("#rate").numberbox({disabled:false});
+                        $("#otherType").combobox({disabled:false});
+                        $("#finanial").combobox({disabled:false})
+                    }
+                },
+                onChange:function (r) {
+                    var o=$("#" + id).combotree('tree').tree('getSelected').pid;
+                    if(o!="5"&&o!="8"){
+                        $("#rate").numberbox({disabled:true});
+                        $("#rate").numberbox('setValue','');
+                        $("#otherType").combobox({disabled:true});
+                        $("#finanial").combobox({disabled:true})
+                    }else {
+                        $("#rate").numberbox({disabled:false});
+                        $("#otherType").combobox({disabled:false});
+                        $("#finanial").combobox({disabled:false})
+                    }
+                }
+            });
+        }
+
+        //状态
+        function getState(id, v) {
+            if (v == undefined | v == null) {
+                v = '';
+            }
+            $("#" + id).combobox({
+                url: "/moneyFundsController/getState",
+                valueField: 'id',
+                textField: 'name',
+                onLoadSuccess: function (r) {
+                    $(this).combobox('setValue', v);
+                }
+            });
+        }
+
+        //状态2
+        function getState2(id, v) {
+            if (v == undefined | v == null) {
+                v = '';
+            }
+            $("#" + id).combobox({
+                url: "/moneyFundsController/getState",
+                valueField: 'id',
+                textField: 'name',
+                onLoadSuccess: function (r) {
+                    $(this).combobox('setValue', v);
+                    if (v == 0) {
+                        $("#reason").textbox({disabled: true});
+                    } else {
+                        $("#reason").textbox({disabled: false});
+                    }
+                },
+                onChange: function (r) {
+                    if (r == 0) {
+                        $("#reason").textbox({disabled: true});
+                    } else {
+                        $("#reason").textbox({disabled: false});
+                    }
+                }
+            });
+        }
+
+        //
+        function getFinanial(id, v) {
+            if (v == undefined | v == null) {
+                v = '';
+            }
+            $("#" + id).combobox({
+                url: "/moneyFundsController/getFinanial",
+                valueField: 'id',
+                textField: 'name',
+                onLoadSuccess: function (r) {
+                    $(this).combobox('setValue', v);
+                }
+            })
+        }
+
+        function getOtherType(id, v) {
+            if (v == undefined | v == null) {
+                v = '';
+            }
+            $("#" + id).combobox({
+                url: "/moneyFundsController/getOtherType",
+                valueField: 'id',
+                textField: 'name',
+                onLoadSuccess: function (r) {
+                    $(this).combobox('setValue', v);
+                }
+            })
+        }
+
+
+        function initDialog(v) {
+            var msg = "",id="";
+
+            $("#money").numberbox({
+                prefix: "￥",
+                min: 0,
+                precision: 2
+            });
+            $("#rate").numberbox({
+                suffix: "%",
+                min: 0,
+                precision: 3
+            });
+
+            if (v == undefined || v == "") {
+                $("#dialog").dialog({title: '新增'});
+                msg='新增';
+                getTypeTree2("typeTree");
+                getState2("stateId", "0");
+                $("#money").numberbox('setValue', '');
+                $("#rate").numberbox('setValue', '');
+                getFinanial("finanial");
+                getOtherType("otherType");
+            } else {
+                $("#dialog").dialog({title: '修改'});
+                msg='修改';
+                id=v.id;
+                getTypeTree2("typeTree",v.fundId);
+                getState2("stateId", v.state);
+                $("#money").numberbox('setValue', v.money);
+                $("#rate").numberbox('setValue', v.rate);
+                getFinanial("finanial",v.finanial);
+                getOtherType("otherType",v.otherType);
+                $("#content").textbox('setValue',v.content);
+                $("#reason").textbox('setValue',v.reason);
+                $("#transactionTime").datebox('setValue',v.transactionTime);
+
+            }
+
+            $("#dialog").dialog({
+                width: 700,
+                height: 450,
+                closed: true,
+                cache: false,
+                modal: true,
+                buttons: [{
+                    text: '保存',
+                    handler: function () {
+                        //对类型结构验证
+                        if($("#typeTree").combobox('getValue')==''){
+                            $.messager.alert('提示信息', '类型结构不能为空', 'warning');
+                            return;
+                        }
+                        var temp=$("#typeTree").combotree('tree').tree('getSelected');
+                        if(temp.children!=''){
+                            $.messager.alert('提示信息', '请选择具体分类', 'warning');
+                            return;
+                        }
+                        var o=temp.pid;
+                        if(o=="5"||o=="8"){
+                            if($("#rate").numberbox('getValue')==""){
+                                $.messager.alert('提示信息', '利率不能为空', 'warning');
+                                return;
+                            }
+                            if($("#otherType").combobox('getValue')==""){
+                                $.messager.alert('提示信息', '期数不能为空', 'warning');
+                                return;
+                            }
+                            if($("#finanial").combobox('getValue')==""){
+                                $.messager.alert('提示信息', '交易方不能为空', 'warning');
+                                return;
+                            }
+                        }
+                        //状态
+                        if($("#stateId").combobox('getValue')==""){
+                            $.messager.alert('提示信息', '状态不能为空', 'warning');
+                            return;
+                        }
+                        if($("#stateId").combobox('getValue')=="1"&&$("#reason").textbox('getValue')==""){
+                            $.messager.alert('提示信息', '作废原因不能为空', 'warning');
+                            return;
+                        }
+                        //交易金额
+                        if($("#money").numberbox('getValue')==""){
+                            $.messager.alert('提示信息', '交易金额不能为空', 'warning');
+                            return;
+                        }
+                        //交易时间
+                        if($("#transactionTime").datebox('getValue')==""){
+                            $.messager.alert('提示信息', '交易时间不能为空', 'warning');
+                            return;
+                        }
+
+                        $.ajax({
+                            url:"/moneyFundsController/insertOrUpdate",
+                            type:'post',
+                            async:false,
+                            data:{
+                                id:id,
+                                fundId:$("#typeTree").combotree('getValue'),
+                                money:$("#money").numberbox('getValue'),
+                                stateId:$("#stateId").combobox('getValue'),
+                                transactionTime:$("#transactionTime").datebox('getValue'),
+                                content:$("#content").textbox('getValue'),
+                                reason:$("#reason").textbox('getValue'),
+                                rate:$("#rate").numberbox('getValue'),
+                                finanial:$("#finanial").combobox('getValue'),
+                                otherType:$("#otherType").combobox('getValue')
+                            },
+                            success:function (r) {
+                                if(r){
+                                    $("#grid").datagrid('clearSelections');
+                                    $("#grid").datagrid('reload');
+                                    $.messager.alert('提示信息', msg + '成功', 'info');
+                                } else {
+                                    $.messager.alert('提示信息', msg + '失败', 'warning');
+                                }
+                                $("#dialog").dialog('close');
+                            },
+                            error: function (r) {
+                                $.messager.alert('提示信息', '请联系管理员', 'warning');
+                                return;
+                            }
+                        });
+                    }
+                }, {
+                    text: '取消',
+                    handler: function () {
+                        $("#dialog").dialog('close');
+                    }
+                }
+                ]
+            });
+
+            $("#dialog").dialog('open');
+
+        }
+
+    </script>
+</head>
+<body class="easyui-layout">
+<div data-options="region:'center',title:'交易信息',split:true" style="">
+    <table id="grid" style="height: 100%"></table>
+</div>
+<div data-options="region:'east',title:'交易信息查询',split:true" style="width:300px;">
+    <table cellspacing="10" style="margin: 0 auto;">
+        <tr>
+            <td style="text-align: right">类型结构：</td>
+            <td><input
+                    id="FrmTypeTree" class="easyui-combotree"
+                    style="width:170px;height:30px"/></td>
+        </tr>
+        <tr>
+            <td style="text-align: right">状态：</td>
+            <td><select
+                    id="FrmStateId" class="easyui-combobox"
+                    style="width:170px;height:30px"></select></td>
+        </tr>
+        <tr>
+            <td style="text-align: right">交易日期：</td>
+            <td><input type="text" class="easyui-datebox"
+                       id="FrmTransactionTimeStart"
+                       data-options="buttons:buttons,editable:false"
+                       style="width:170px;height:30px" between="start"></td>
+        </tr>
+        <tr>
+            <td style="text-align: right">至：</td>
+            <td><input
+                    data-options="buttons:buttons,editable:false"
+                    type="text"
+                    class="easyui-datebox"
+                    id="FrmTransactionTimeEnd"
+                    style="width:170px;height:30px"
+                    between="end"></td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center">
+                <div id="query" class="easyui-linkbutton c4" style="width: 120px" onclick="query()">查询</div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="dialog" hidden style="padding:10px 20px">
+    <form>
+        <table cellspacing="15" style="margin: 0 auto">
+            <tr>
+                <td style="text-align: right">类型结构：</td>
+                <td><input id="typeTree" class="easyui-combotree" style="width:174px;height:20px"/><span
+                        style="color: red;margin: 0px 25px 0px 5px">*</span></td>
+                <td style="text-align: right">交易金额：</td>
+                <td><input id="money" class="easyui-numberbox" style="width:174px;height:20px"/><span
+                        style="color: red;margin: 0px 25px 0px 5px">*</span></td>
+            </tr>
+            <tr>
+                <td style="text-align: right">状态：</td>
+                <td><select id="stateId" class="easyui-combobox"></select><span
+                        style="color: red;margin: 0px 25px 0px 5px">*</span></td>
+                <td style="text-align: right">交易时间：</td>
+                <td><input id="transactionTime" class="easyui-datebox" style="width:174px;height:20px"
+                           data-options="buttons:buttons,editable:false"
+                           type="text"><span
+                        style="color: red;margin: 0px 25px 0px 5px">*</span></td>
+
+            </tr>
+            <tr>
+                <td style="text-align: right">详细内容：</td>
+                <td colspan="3">
+                    <input id="content" class="easyui-textbox" style="height: 60px;width: 480px"
+                           data-options="multiline:true">
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: right">作废原因：</td>
+                <td colspan="3">
+                    <input id="reason" class="easyui-textbox" style="height: 60px;width: 480px"
+                           data-options="multiline:true">
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: right">利率：</td>
+                <td><input id="rate" class="easyui-numberbox" style="width:174px;height:20px"/><span
+                        style="color: red;margin: 0px 25px 0px 5px">*</span></td>
+                <td style="text-align: right">交易方：</td>
+                <td><select id="finanial" class="easyui-combobox"></select><span
+                        style="color: red;margin: 0px 25px 0px 5px">*</span></td>
+            </tr>
+            <tr>
+                <td style="text-align: right">期数：</td>
+                <td><input id="otherType" class="easyui-combobox" style="width:174px;height:20px"/><span
+                        style="color: red;margin: 0px 25px 0px 5px">*</span></td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>角色管理</title>
+    <!--css引入-->
+    <link th:href="@{/plugins/jquery-easyui-1.4.5/themes/default/easyui.css}" rel="stylesheet" type="text/css">
+    <link th:href="@{/plugins/jquery-easyui-1.4.5/themes/icon.css}" rel="stylesheet" type="text/css">
+    <!--js引入 -->
+    <script th:src="@{/plugins/jquery-easyui-1.4.5/jquery-1.8.3.min.js}"></script>
+    <script th:src="@{/plugins/jquery-easyui-1.4.5/jquery.easyui.min.js}"></script>
+    <script th:src="@{/plugins/jquery-easyui-1.4.5/easyui-lang-zh_CN.js}"></script>
+    <script th:src="@{/plugins/jquery-easyui-1.4.5/jquery.json-2.4.min.js}"></script>
+    <script th:src="@{/plugins/easyUICommon.js}"></script>
+    <script type="text/javascript">
+
+        var columns = [{
+            field: 'roleId',
+            checkbox: true
+        }, {
+            field: 'roleName',
+            title: '角色名称',
+            width: 80,
+            align: 'center'
+        }, {
+            field: 'desc',
+            title: '角色描述',
+            width: 80,
+            align: 'center'
+        }];
+        columns = [columns];
+        var toolbar = [
+            {
+                id: 'add',
+                text: '新增',
+                iconCls: 'icon-add',
+                handler: function () {
+                    initDialog(null);
+                }
+            }, {
+                id: 'update',
+                text: '修改',
+                iconCls: 'icon-edit',
+                handler: function () {
+                    var datas = $("#grid").datagrid('getSelections');
+                    if (datas.length != 1) {
+                        $.messager.alert('提示信息', '请选择一条数据', 'warning');
+                        return;
+                    }
+                    initDialog(datas[0]);
+                }
+            }, {
+                id: 'delete',
+                text: '删除',
+                iconCls: 'icon-remove',
+                handler: function () {
+                    var datas = $("#grid").datagrid('getSelections');
+                    if (datas.length == 0) {
+                        $.messager.alert('提示信息', '至少选择一条数据', 'warning');
+                        return;
+                    }
+
+                    $.messager.confirm('确认', '您确认想要删除记录吗？', function (r) {
+                        if (r) {
+                            var arr = [];
+                            for (var i = 0; i < datas.length; i++) {
+                                arr.push(addQuotationMarksS(datas[i].roleId));
+                            }
+
+                            $("#grid").datagrid('clearSelections');
+
+                            $.ajax({
+                                url: "/roleController/deleteRole",
+                                type: 'post',
+                                async: false,
+                                data: {
+                                    roleIdArr: arr.toString()
+                                },
+                                success: function (r) {
+                                    if (r) {
+                                        $.messager.alert('提示信息', '删除成功', 'info');
+                                        $("#grid").datagrid('reload');
+                                    } else {
+                                        $.messager.alert('提示信息', '删除失败', 'warning');
+                                        return;
+                                    }
+                                },
+                                error: function (r) {
+                                    $.messager.alert('提示信息', '请联系管理员', 'warning');
+                                    return;
+                                }
+                            });
+                        }
+                    });
+
+                }
+            }, {
+                id: 'adjust',
+                text: '调整权限',
+                iconCls: 'icon-man',
+                handler: function () {
+                    var datas = $("#grid").datagrid('getSelections');
+                    if (datas.length != 1) {
+                        $.messager.alert('提示信息', '请选择一条数据', 'warning');
+                        return;
+                    }
+                    initAdjust(datas[0]);
+                }
+            }
+        ];
+
+        function initDialog(v) {
+            var msg = "", roleId = "";
+            if (v == null) {
+                msg = '新增';
+                $("#dialog").dialog({title: '新增角色'});
+                clearDialogForm("dialog");
+            } else {
+                msg = '修改';
+                roleId = v.roleId;
+                $("#dialog").dialog({title: '修改角色'});
+                $("#roleName").textbox('setValue', v.roleName);
+                $("#desc").textbox('setValue', v.desc);
+            }
+
+            $("#dialog").dialog({
+                width: 500,
+                height: 300,
+                closed: true,
+                cache: false,
+                modal: true,
+                buttons: [{
+                    text: '保存',
+                    handler: function () {
+                        if ($("#roleName").textbox('getValue') == "") {
+                            $.messager.alert('提示信息', '角色名称不能为空', 'warning');
+                            return;
+                        }
+                        $.ajax({
+                            url: "/roleController/verifyRole",
+                            type: 'post',
+                            async: false,
+                            data: {
+                                roleId: roleId,
+                                roleName: $("#roleName").textbox('getValue')
+                            },
+                            success: function (r) {
+                                if (r) {
+                                    $.ajax({
+                                        url: "/roleController/insertOrUpdateRole",
+                                        type: 'post',
+                                        async: false,
+                                        data: {
+                                            roleId: roleId,
+                                            roleName: $("#roleName").textbox('getValue'),
+                                            desc: $("#desc").textbox('getValue')
+                                        },
+                                        success: function (r) {
+                                            if (r) {
+                                                $("#grid").datagrid('clearSelections');
+                                                $("#grid").datagrid('reload');
+                                                $.messager.alert('提示信息', msg + '成功', 'info');
+                                            } else {
+                                                $.messager.alert('提示信息', msg + '失败', 'warning');
+                                            }
+                                            $("#dialog").dialog('close');
+                                        },
+                                        error: function (r) {
+                                            $.messager.alert('提示信息', '角色名称不能重复', 'warning');
+                                            return;
+                                        }
+                                    })
+                                } else {
+                                    $.messager.alert('提示信息', '角色名称不能重复', 'warning');
+                                    return;
+                                }
+                            },
+                            error: function (r) {
+                                $.messager.alert('提示信息', '请联系管理员', 'warning');
+                                return;
+                            }
+                        });
+                    }
+                }, {
+                    text: '取消',
+                    handler: function () {
+                        $("#dialog").dialog('close');
+
+                    }
+                }]
+            });
+
+            $("#dialog").dialog('open');
+        }
+
+        $(function () {
+            $('#grid').datagrid({
+                url: "/roleController/getData",
+                iconCls: 'icon-forward',
+                fit: true,
+                fitColumns: true,
+                nowrap: true,
+                border: false,
+                method: 'POST',
+                striped: true,
+                pageList: [20, 40, 60],
+                pagination: true,
+                toolbar: toolbar,
+                idField: 'id',
+                columns: columns,
+                onLoadSuccess: function () {
+                    console.log($('#grid').datagrid('getRows'))
+                }
+            });
+
+            query();
+        });
+
+        function query() {
+            $("#grid").datagrid({
+                url: "/roleController/getData",
+                queryParams: {
+                    roleName: $("#FrmROLENAME").textbox('getValue'),
+                    createTimeStart: $("#FrmCreateTimeStart").datebox('getValue'),
+                    createTimeEnd: $("#FrmCreateTimeEnd").datebox('getValue')
+                }
+            });
+        }
+
+        function initAdjust(v) {
+            //标题
+            $("#p p").text("当前角色：" + v.roleName);
+            //树渲染
+            $("#treeShow").tree({
+                url: "/permissionController/permissionTree",
+                queryParams: {
+                    roleId: v.roleId
+                },
+                checkbox: true,
+                lines: true,
+                //级联检查
+                cascadeCheck: true
+            });
+
+
+
+            $("#dlg_adjust").dialog({
+                title: '调整权限',
+                width: 500,
+                height: 400,
+                closed: true,
+                cache: false,
+                modal: true,
+                buttons: [{
+                    text: '保存',
+                    handler: function () {
+                        var nodes = $("#treeShow").tree('getChildren');
+                        var nodesIdArr = [];
+                        for (var i = 0; i < nodes.length; i++) {
+                            if (nodes[i].checkState != 'unchecked') {
+                                nodesIdArr.push(addQuotationMarksS(nodes[i].id));
+                            }
+                        }
+                        console.log(nodesIdArr);
+                        $.ajax({
+                            url: "/roleController/savePermission",
+                            type: 'post',
+                            async: true,
+                            data: {
+                                roleId: v.roleId,
+                                permissionIdArr: nodesIdArr.toString()
+                            },
+                            success: function (r) {
+                                if (r) {
+                                    $("#dlg_adjust").dialog('close');
+                                    $.messager.alert('提示信息', '保存成功', 'info');
+                                    return;
+                                } else {
+                                    $("#dlg_adjust").dialog('close');
+                                    $.messager.alert('提示信息', '保存失败', 'warning');
+                                    return;
+                                }
+                            },
+                            error: function (r) {
+                                $.messager.alert('提示信息', '请联系管理员', 'warning');
+                                return;
+                            }
+
+                        })
+                    }
+                }, {
+                    text: '取消',
+                    handler: function () {
+                        $("#dlg_adjust").dialog("close");
+                    }
+                }]
+            });
+            $("#dlg_adjust").dialog("open");
+        }
+
+    </script>
+</head>
+<body class="easyui-layout">
+<div data-options="region:'center',title:'用户信息',split:true" style="">
+    <table id="grid" style="height: 100%"></table>
+</div>
+<div data-options="region:'east',title:'用户信息查询',split:true" style="width:300px;">
+    <table cellspacing="10" style="margin: 0 auto;">
+        <tr>
+            <td style="text-align: right">角色名称：</td>
+            <td><input id="FrmROLENAME" class="easyui-textbox"
+                       style="width:170px;height:30px"></td>
+        </tr>
+        <tr>
+            <td style="text-align: right">创建日期：</td>
+            <td><input type="text" class="easyui-datebox"
+                       id="FrmCreateTimeStart"
+                       data-options="buttons:buttons,editable:false"
+                       style="width:170px;height:30px" between="start"></td>
+        </tr>
+        <tr>
+            <td style="text-align: right">至：</td>
+            <td><input
+                    data-options="buttons:buttons,editable:false"
+                    type="text"
+                    class="easyui-datebox"
+                    id="FrmCreateTimeEnd"
+                    style="width:170px;height:30px"
+                    between="end"></td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center">
+                <div id="query" class="easyui-linkbutton c4" style="width: 120px" onclick="query()">查询</div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="dialog" hidden style="padding:10px 20px">
+    <form>
+        <table cellspacing="15" style="margin: 0 auto">
+            <tr>
+                <td style="text-align: right">角色名称：</td>
+                <td><input id="roleName" class="easyui-textbox" style="width:174px;height:20px"><span
+                        style="color: red;margin: 0px 25px 0px 5px">*</span></td>
+            </tr>
+            <tr>
+                <td style="text-align: right">角色描述：</td>
+                <td>
+                    <input id="desc" class="easyui-textbox" style="height: 60px;width: 300px"
+                           data-options="multiline:true">
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<div id="dlg_adjust" hidden>
+    <div id="p" class="easyui-panel" title="" style="padding:5px 10px;width: 486px">
+        <p>当前角色：</p>
+    </div>
+    <div class="easyui-panel" title="" style="padding:5px 10px;margin-top: 20px;height: 250px">
+        <ul id="treeShow" class="easyui-tree"></ul>
+    </div>
+</div>
+</body>
+</html>

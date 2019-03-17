@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>主页面</title>
+    <!--css引入-->
+    <link href="/plugins/jquery-easyui-1.7.3/themes/default/easyui.css" rel="stylesheet" type="text/css">
+    <link href="/plugins/jquery-easyui-1.7.3/themes/icon.css" rel="stylesheet" type="text/css">
+    <!--js引入 -->
+    <script src="/plugins/jquery-easyui-1.4.5/jquery-1.8.3.min.js"></script>
+    <script src="/plugins/jquery-easyui-1.7.3/jquery.easyui.min.js"></script>
+    <script src="/plugins/jquery-easyui-1.4.5/easyui-lang-zh_CN.js"></script>
+    <script src="/plugins/jquery-easyui-1.4.5/jquery.json-2.4.min.js"></script>
+    <script src="/plugins/easyUICommon.js"></script>
+    <script src="/plugins/uuid.js"></script>
+    <script type="text/javascript">
+        var menuData = "";
+        $(function () {
+            var userId = getCookie("userId");
+            for (var i = 0; i < 15; i++) {
+                console.log(Math.uuid().replace(/-/g, ""));
+            }
+
+            $.ajax({
+                url: '/permissionController/moduleTree',
+                type: 'post',
+                async: false,
+                data: {
+                    userId: userId
+                },
+                success: function (r) {
+                    r = JSON.parse(r);
+                    menuData = r;
+                    for (var i = 0; i < r.length; i++) {
+                        //一级主菜单
+                        var top = r[i];
+                        //默认选中
+                        if (i == 0) {
+                            $("#north #top_buttons").append("<a id='" + top.id + "' href=\"#\" class=\"easyui-linkbutton\" data-options=\"toggle:true,group:'g1',selected:true\" style='margin-right: 5px;padding: 0 5px'>" + top.text + "</a>")
+                        } else {
+                            $("#north #top_buttons").append("<a id='" + top.id + "' href=\"#\" class=\"easyui-linkbutton\" data-options=\"toggle:true,group:'g1'\" style='margin-right: 5px;padding: 0 5px'>" + top.text + "</a>")
+                        }
+                        //重新渲染样式
+                        $.parser.parse($("#north #top_buttons"));
+                    }
+                    menuShow(r[0]);
+                    //第一次加载展开
+                    $("#sm").sidemenu('expand');
+                },
+                error: function (r) {
+                    $.messager.alert('提示信息', '获取权限失败,请联系管理员', 'warning');
+                    return;
+                }
+            });
+
+            $("#top_buttons a").bind('click', function (r) {
+                //遍历菜单
+                for (var i = 0; i < menuData.length; i++) {
+                    //判断按钮id是否相等
+                    if (menuData[i].id == $(this).linkbutton('options').id) {
+                        menuShow(menuData[i]);
+                    }
+                }
+            });
+        });
+
+        function menuShow(top) {
+            $('#sm').sidemenu({
+                data: top.children,
+                onSelect: function (r) {
+                    $("#tabs").tabs('exists', r.text);
+                    //判断选项卡是否存在
+                    if ($("#tabs").tabs('exists', r.text)) {
+                        return;
+                    } else {
+                        $('#tabs').tabs('add', {
+                            title: r.text,
+                            closable: true,
+                            content: "<iframe scrolling=\"yes\" frameborder=\"0\" src=\"" + r.path + "?permissionId=" + r.id + "\" style=\"width:100%;height:100%;\"></iframe>"
+                        });
+                    }
+                }
+            });
+        }
+
+    </script>
+</head>
+<body class="easyui-layout">
+<div id="north" data-options="region:'north'" style="height:100px">
+    <div id="top_buttons" class="" style="margin: 65px 0 0 150px">
+    </div>
+</div>
+<div data-options="region:'west',split:true" title="菜单" style="width:150px;">
+    <div id="sm" style="width:143px"></div>
+</div>
+<div data-options="region:'center'">
+    <div id="tabs" class="easyui-tabs" data-options="tools:'#tab-tools'" style="width:100%;height:100%;"></div>
+</div>
+
+</body>
+</html>

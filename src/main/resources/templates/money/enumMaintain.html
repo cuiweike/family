@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>字典维护</title>
+    <!--css引入-->
+    <link th:href="@{/plugins/jquery-easyui-1.4.5/themes/default/easyui.css}" rel="stylesheet" type="text/css">
+    <link th:href="@{/plugins/jquery-easyui-1.4.5/themes/icon.css}" rel="stylesheet" type="text/css">
+    <!--js引入 -->
+    <script th:src="@{/plugins/jquery-easyui-1.4.5/jquery-1.8.3.min.js}"></script>
+    <script th:src="@{/plugins/jquery-easyui-1.4.5/jquery.easyui.min.js}"></script>
+    <script th:src="@{/plugins/jquery-easyui-1.4.5/easyui-lang-zh_CN.js}"></script>
+    <script th:src="@{/plugins/jquery-easyui-1.4.5/jquery.json-2.4.min.js}"></script>
+    <script th:src="@{/plugins/easyUICommon.js}"></script>
+    <script th:src="@{/plugins/uuid.js}"></script>
+
+    <script type="text/javascript">
+        var uuid, parentId;
+        var columns = [{
+            field: 'id',
+            checkbox: true
+        }, {
+            field: 'text',
+            title: '字典名称',
+            width: 80,
+            align: 'left',
+            editor: 'text'
+        }];
+        columns = [columns];
+        var toolbar = [
+            {
+                id: 'add',
+                text: '新增',
+                iconCls: 'icon-add',
+                handler: function () {
+                    var datas = $("#treeGrid").treegrid('getSelections');
+                    if (datas.length != 1) {
+                        $.messager.alert('提示信息', '请选择一条数据', 'warning');
+                        return;
+                    }
+                    //上一个修改或新增后保存
+                    if (uuid != undefined) {
+                        $("#treeGrid").treegrid('endEdit', uuid);
+                        var node=$("#treeGrid").treegrid('find',uuid);
+                        $.ajax({
+                            url: "/enumFundsController/saveEnum",
+                            type: 'post',
+                            async: true,
+                            data: {
+                                id: uuid,
+                                parentId: parentId,
+                                name:node.text
+                            },
+                            success: function (r) {
+                                if (r) {
+
+                                } else {
+                                    $.messager.alert('提示信息', '保存失败', 'warning');
+                                    return;
+                                }
+                            },
+                            error: function (r) {
+                                $.messager.alert('提示信息', '请联系管理员', 'warning');
+                                return;
+                            }
+                        });
+                    }
+
+
+                    uuid = Math.uuid().replace(/-/g, "");
+                    parentId = datas[0].id;
+                    console.log(uuid);
+
+                    $("#treeGrid").treegrid('append', {
+                        //父元素id
+                        parent: parentId,  //
+                        //id和text
+                        data: [{
+                            id: uuid,
+                            text: '请输入内容'
+                        }]
+                    });
+                    $("#treeGrid").treegrid('beginEdit', uuid);
+                }
+            }, {
+                id: 'update',
+                text: '修改',
+                iconCls: 'icon-edit',
+                handler: function () {
+                    var datas = $("#treeGrid").treegrid('getSelections');
+                    if (datas.length != 1) {
+                        $.messager.alert('提示信息', '请选择一条数据', 'warning');
+                        return;
+                    }
+                }
+            }, {
+                id: 'delete',
+                text: '删除',
+                iconCls: 'icon-remove',
+                handler: function () {
+                    var datas = $("#grid").datagrid('getSelections');
+                    if (datas.length == 0) {
+                        $.messager.alert('提示信息', '至少选择一条数据', 'warning');
+                        return;
+                    }
+
+                    $.messager.confirm('确认', '您确认想要删除记录吗？', function (r) {
+                        if (r) {
+                            var arr = [];
+                            for (var i = 0; i < datas.length; i++) {
+                                arr.push(addQuotationMarksS(datas[i].roleId));
+                            }
+
+                            $("#grid").datagrid('clearSelections');
+
+                            $.ajax({
+                                url: "/roleController/deleteRole",
+                                type: 'post',
+                                async: false,
+                                data: {
+                                    roleIdArr: arr.toString()
+                                },
+                                success: function (r) {
+                                    if (r) {
+                                        $.messager.alert('提示信息', '删除成功', 'info');
+                                        $("#grid").datagrid('reload');
+                                    } else {
+                                        $.messager.alert('提示信息', '删除失败', 'warning');
+                                        return;
+                                    }
+                                },
+                                error: function (r) {
+                                    $.messager.alert('提示信息', '请联系管理员', 'warning');
+                                    return;
+                                }
+                            });
+                        }
+                    });
+
+                }
+            }];
+
+        $(function () {
+            $('#treeGrid').treegrid({
+                url: "/enumFundsController/getData",
+                iconCls: 'icon-forward',
+                fit: true,
+                fitColumns: true,
+                nowrap: true,
+                border: false,
+                method: 'POST',
+                striped: true,
+                idField: 'id',
+                treeField: 'text',
+                toolbar: toolbar,
+                columns: columns,
+                onLoadSuccess: function () {
+                    console.log($('#treeGrid').datagrid('getRows'))
+                },
+                onClickRow:function (r) {
+                    $("#treeGrid").treegrid('endEdit', uuid);
+                },
+                onAfterEdit:function (r,d) {
+                    console.log(123)
+                    console.log(r)
+                    console.log(d)
+                    console.log(123)
+                }
+            });
+
+        });
+
+    </script>
+
+</head>
+<body class="easyui-layout">
+<div data-options="region:'center',title:'字典信息',split:true" style="">
+    <table id="treeGrid" style="height: 100%"></table>
+</div>
+</body>
+</html>
